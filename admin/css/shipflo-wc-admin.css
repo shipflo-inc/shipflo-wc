@@ -1,0 +1,27 @@
+/**
+ * All of the CSS for your admin-specific functionality should be
+ * included in this file.
+ */
+div#track_order_div div.inner-div {
+    padding: 24px;
+}
+
+div#track_order_div div.inner-div h2{
+    padding: 0;
+    font-size: 21px;
+    font-weight: 400;
+}
+
+div#track_order_div div.inner-div a.button.button-primary.track-button{
+    font-size: 16px;
+    font-weight: 600;
+    padding: 8px 24px;
+}
+
+.woocommerce_page_wc-orders .wp-list-table a.button.track::after {
+    content: "\f323";
+}
+
+.woocommerce_page_wc-orders .wp-list-table a.button.shipflo-resend::after {
+    content: "\f172";
+}

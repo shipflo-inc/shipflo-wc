@@ -1,0 +1,93 @@
+/**
+ * All of the CSS for your public-facing functionality should be
+ * included in this file.
+ */
+section.shipflo-tracking-section {
+    padding: 24px 0;
+}
+
+section.shipflo-tracking-section div.tracking-content {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+section.shipflo-tracking-section div.tracking-content p {
+    margin-top: 0;
+}
+
+section.shipflo-tracking-section div.tracking-content a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+section.shipflo-tracking-section div.tracking-content a span.dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+}
+
+.woocommerce a.button.track {
+    margin: 0 10px;
+    float: left;
+}
+
+.woocommerce a.button.track::before {
+    content: "\f323";
+    display: inline-block;
+    font-family: dashicons;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1;
+    width: 14px;
+    height: 14px;
+    text-decoration: inherit;
+    text-transform: none;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    vertical-align: bottom;
+    text-align: center;
+    transition: color .1s ease-in;
+    padding-right: 8px;
+}
+
+/* .woocommerce a.button.track::before {
+    border-collapse: separate;
+    content: "\f02b";
+    cursor: pointer;
+    display: inline-block;
+    font-family: "Font Awesome 6 Free";
+    font-size: 14px;
+    font-style: normal;
+    font-variant-alternates: normal;
+    font-variant-caps: normal;
+    font-variant-east-asian: normal;
+    font-variant-emoji: normal;
+    font-variant-ligatures: normal;
+    font-variant-numeric: normal;
+    font-variant-position: normal;
+    font-weight: 900;
+    height: 14px;
+    letter-spacing: 1px;
+    line-height: 14px;
+    padding-left: 8px;
+    text-align: left;
+    text-decoration: inherit;
+    text-indent: 0px;
+    text-rendering: auto;
+    text-shadow: none;
+    text-transform: uppercase;
+    text-wrap-mode: nowrap;
+    transform: matrix(-1, 0, 0, 1, 0, 0);
+    transition: color .1s ease-in;
+    white-space-collapse: collapse;
+    width: 13.25px;
+    word-break: break-word;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-border-horizontal-spacing: 2px;
+    -webkit-border-vertical-spacing: 2px;
+    -webkit-font-smoothing: antialiased;
+} */
