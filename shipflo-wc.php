@@ -16,7 +16,7 @@
  * Plugin Name:       ShipFlo WooCommerce
  * Plugin URI:        https://oxosolutions.com/products/wordpress-plugins/shipflo-wc/
  * Description:       The ShipFlo plugin syncs your WooCommerce orders with the ShipFlo delivery platform, automating dispatch and providing real-time tracking for a hassle-free logistics experience.
- * Version:           1.0.0.1
+ * Version:           1.1.0.0
  * Author:            OXO Solutions®
  * Author URI:        https://oxosolutions.com/
  * License:           GPL-3.0+

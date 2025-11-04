@@ -126,18 +126,18 @@ class ShipFlo_WC_Order_Core
 
     function get_payment_info()
     {
-        $payment_method = $this->order->get_payment_method();
+        $method = $this->order->get_payment_method() ?: 'unknown';
 
-        if ($payment_method === 'cod') {
+        if (strpos($method, 'cod') !== false) {
+            $total = (float) $this->order->get_total();
+
             return [
                 'payment_method' => 'cash_pickup',
-                'cod' => (float) $this->order->get_total(), // total includes tax + shipping
+                'cod' => $total > 0 ? $total : NULL,
             ];
         }
 
-        return [
-            'payment_method' => 'paid',
-        ];
+        return ['payment_method' => 'paid'];
     }
 
     function get_message()
@@ -166,76 +166,77 @@ class ShipFlo_WC_Order_Core
         return [
             'platform' => 'woocommerce',
             'signature' => [
-                'woo_version' => WC()->version,
-                'plugin_version' => SHIPFLO_WC_VERSION,
+                'woo_version'         => WC()->version,
+                'plugin'              => 'shipflo-wc',
+                'plugin_version'      => SHIPFLO_WC_VERSION,
                 'shipflo_api_version' => SHIPFLO_API_VERSION,
-                'site_url' => get_site_url(),
-                'site_timezone' => $timezone->getName() // always returns standardized zone name
+                'site_url'            => get_site_url(),
+                'site_timezone'       => $timezone->getName() // returns standardized zone name
             ]
         ];
     }
 
-    function is_within_service_area(): bool
-    {
-        try {
-            // 1. Validate and normalize the shipping postal code
-            $raw_postal = $this->order->get_shipping_postcode();
+    // function is_within_service_area(): bool
+    // {
+    //     try {
+    //         // 1. Validate and normalize the shipping postal code
+    //         $raw_postal = $this->order->get_shipping_postcode();
 
-            if (empty($raw_postal) || !is_string($raw_postal)) {
-                shipflo_logger('warning', '[ShipFlo] Missing or invalid postal code for order.', [
-                    'order_id' => $this->order->get_id() ?? null,
-                    'raw_postal' => $raw_postal,
-                ]);
-                return false;
-            }
+    //         if (empty($raw_postal) || !is_string($raw_postal)) {
+    //             shipflo_logger('warning', '[ShipFlo] Missing or invalid postal code for order.', [
+    //                 'order_id' => $this->order->get_id() ?? null,
+    //                 'raw_postal' => $raw_postal,
+    //             ]);
+    //             return false;
+    //         }
 
-            // Normalize postal code: remove spaces, hyphens, and uppercase
-            $postal_code = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $raw_postal));
+    //         // Normalize postal code: remove spaces, hyphens, and uppercase
+    //         $postal_code = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $raw_postal));
 
-            // 2. Fetch active postal codes from API/config/cache
-            $active_postal_codes = shipflo_get_postal_codes();
+    //         // 2. Fetch active postal codes from API/config/cache
+    //         $active_postal_codes = shipflo_get_postal_codes();
 
-            if (!is_array($active_postal_codes) || empty($active_postal_codes)) {
-                shipflo_logger('warning', '[ShipFlo] No active postal codes available for service area check.', [
-                    'order_id' => $this->order->get_id() ?? null,
-                ]);
-                return false;
-            }
+    //         if (!is_array($active_postal_codes) || empty($active_postal_codes)) {
+    //             shipflo_logger('warning', '[ShipFlo] No active postal codes available for service area check.', [
+    //                 'order_id' => $this->order->get_id() ?? null,
+    //             ]);
+    //             return false;
+    //         }
 
-            // 3. Normalize list of postal codes (ensure strings, clean formatting)
-            $normalized_active = array_filter(array_map(function ($pc) {
-                if (!is_string($pc)) return null;
-                return strtoupper(preg_replace('/[^A-Z0-9]/i', '', $pc));
-            }, $active_postal_codes));
+    //         // 3. Normalize list of postal codes (ensure strings, clean formatting)
+    //         $normalized_active = array_filter(array_map(function ($pc) {
+    //             if (!is_string($pc)) return null;
+    //             return strtoupper(preg_replace('/[^A-Z0-9]/i', '', $pc));
+    //         }, $active_postal_codes));
 
-            // 4. Short-circuit if the normalized list is empty
-            if (empty($normalized_active)) {
-                shipflo_logger('warning', '[ShipFlo] Active postal code list is empty after normalization.', [
-                    'order_id' => $this->order->get_id() ?? null,
-                ]);
-                return false;
-            }
+    //         // 4. Short-circuit if the normalized list is empty
+    //         if (empty($normalized_active)) {
+    //             shipflo_logger('warning', '[ShipFlo] Active postal code list is empty after normalization.', [
+    //                 'order_id' => $this->order->get_id() ?? null,
+    //             ]);
+    //             return false;
+    //         }
 
-            // 5. Perform the lookup
-            $in_area = in_array($postal_code, $normalized_active, true);
+    //         // 5. Perform the lookup
+    //         $in_area = in_array($postal_code, $normalized_active, true);
 
-            if (!$in_area) {
-                shipflo_logger('info', '[ShipFlo] Order postal code outside service area.', [
-                    'order_id' => $this->order->get_id() ?? null,
-                    'postal_code' => $postal_code,
-                ]);
-            }
+    //         if (!$in_area) {
+    //             shipflo_logger('info', '[ShipFlo] Order postal code outside service area.', [
+    //                 'order_id' => $this->order->get_id() ?? null,
+    //                 'postal_code' => $postal_code,
+    //             ]);
+    //         }
 
-            return $in_area;
-        } catch (Throwable $e) {
-            // 6. Fail-safe: never throw inside validation
-            shipflo_logger('error', '[ShipFlo] Exception during service area check.', [
-                'error' => $e->getMessage(),
-                'order_id' => $this->order->get_id() ?? null,
-            ]);
-            return false;
-        }
-    }
+    //         return $in_area;
+    //     } catch (Throwable $e) {
+    //         // 6. Fail-safe: never throw inside validation
+    //         shipflo_logger('error', '[ShipFlo] Exception during service area check.', [
+    //             'error' => $e->getMessage(),
+    //             'order_id' => $this->order->get_id() ?? null,
+    //         ]);
+    //         return false;
+    //     }
+    // }
 
     function is_pickup_order()
     {

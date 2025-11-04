@@ -12,16 +12,13 @@ define('SHIPFLO_WC_PLUGIN_DIR', plugin_dir_path(dirname(__FILE__)));
 define('SHIPFLO_WC_PLUGIN_URL', plugin_dir_url(dirname(__FILE__)));
 define('SHIPFLO_WC_PLUGIN_BASENAME', plugin_basename(dirname(__FILE__)));
 
-// Encryption key for the plugin
-define('SHIPFLO_PLUGIN_ENCRYPTION_KEY_OPTION_ID', '_shipflo_wc_plugin_encryption_key');
 // API KEY - encrypted
 define('SHIPFLO_API_KEY_OPTION_ID', '_shipflo_wc_api_key');
 // Order sync and management options
 define('SHIPFLO_ORDER_MANAGE_OPTION_ID', '_shipflo_wc_order_manage');
 // Merchant information options
+define('SHIPFLO_WEBHOOK_SECRET', '_shipflo_wc_webhook_secret');
 define('SHIPFLO_MERCHANT_ID_OPTION_ID', '_shipflo_wc_merchant_id');
-define('SHIPFLO_MERCHANT_EMAIL_OPTION_ID', '_shipflo_wc_merchant_email');
-define('SHIPFLO_MERCHANT_NAME_OPTION_ID', '_shipflo_wc_merchant_name');
 define('SHIPFLO_MERCHANT_REGISTERED_UUID', '_shipflo_wc_registered_uuid');
 // Active Postal Codes
 define('SHIPFLO_ACTIVE_POSTAL_CODES_TRANSIENT', 'shipflo_postal_codes');

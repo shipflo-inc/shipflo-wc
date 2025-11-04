@@ -81,118 +81,77 @@ function shipflo_remove_emoji($string): string
     return preg_replace($emoji_patterns, '', $string);
 }
 
-/** Encryption Key Management */
-function shipflo_generate_encryption_key(): bool 
-{
-    if (!get_option(SHIPFLO_PLUGIN_ENCRYPTION_KEY_OPTION_ID)) {
-        if (function_exists('random_bytes')) {
-            $key = bin2hex(random_bytes(32));
-            update_option(SHIPFLO_PLUGIN_ENCRYPTION_KEY_OPTION_ID, $key, false);
-            shipflo_logger('info', '[ShipFlo] Plugin encryption key generated using random_bytes().');
-            shipflo_logger('notice', '[ShipFlo] Plugin encryption key generated');
-            return true;
-
-        } elseif (function_exists('openssl_random_pseudo_bytes')) {
-            $key = bin2hex(openssl_random_pseudo_bytes(32));
-            update_option(SHIPFLO_PLUGIN_ENCRYPTION_KEY_OPTION_ID, $key, false);
-            shipflo_logger('warning', '[ShipFlo] Plugin encryption key generated using openssl_random_pseudo_bytes().');
-            shipflo_logger('notice', '[ShipFlo] Plugin encryption key generated.');
-            return true;
-
-        } else {
-            shipflo_logger('error', '[ShipFlo] No secure random function available. Plugin cannot generate encryption key.');
-            return false;
-        }
+/** Generate Webhook Secret for this merchant */
+function shipflo_get_webhook_secret(): string {
+    $secret = get_option( SHIPFLO_WEBHOOK_SECRET );
+    if (!$secret) {
+        $secret = bin2hex(random_bytes(32)); // 64-char hex
+        update_option( SHIPFLO_WEBHOOK_SECRET , $secret, false);
     }
-
-    return true;
-}
-
-function shipflo_get_encryption_key(): string 
-{
-    $key_hex = get_option(SHIPFLO_PLUGIN_ENCRYPTION_KEY_OPTION_ID);
-
-    if (!$key_hex) {
-        shipflo_logger('alert', '[ShipFlo] Encryption key missing. Please reactivate the plugin.');
-        wp_die(
-            __('ShipFlo Error: Missing encryption key. Please reactivate the plugin to generate it.', 'shipflo-wc'),
-            __('ShipFlo Critical Error', 'shipflo-wc'),
-            ['back_link' => true]
-        );
-    }
-
-    $key_binary = hex2bin($key_hex);
-    if ($key_binary === false || strlen($key_binary) !== 32) {
-        shipflo_logger('alert', '[ShipFlo] Stored encryption key is corrupted or invalid.');
-        wp_die(
-            __('ShipFlo Error: Corrupted encryption key. Please deactivate and reactivate the plugin to regenerate.', 'shipflo-wc'),
-            __('ShipFlo Critical Error', 'shipflo-wc'),
-            ['back_link' => true]
-        );
-    }
-
-    $salt = '&4i|Y1q5Pk8xc^r0';
-    return hash('sha256', $key_binary . $salt, true); // 32-byte binary
+    return $secret;
 }
 
 /** Encryption & Decryption */
-function shipflo_encrypt_data($data): string 
+function shipflo_encrypt_data(string $data): ?string 
 {
-    $key = shipflo_get_encryption_key();
-    if (empty($key)) {
-        shipflo_logger('error', '[ShipFlo] Encryption key missing or invalid during encryption.');
-        return '';
-    }
-
-    $cipher = 'aes-256-cbc';
-    $iv_len = openssl_cipher_iv_length($cipher);
-    $iv = random_bytes($iv_len);
-
+    $key       = hash('sha256', wp_salt('shipflo_encryption'), true); // derive key safely
+    $cipher    = 'aes-256-cbc';
+    $iv_len    = openssl_cipher_iv_length($cipher);
+    $iv        = random_bytes($iv_len);
+    
     $encrypted = openssl_encrypt($data, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+
     if ($encrypted === false) {
         shipflo_logger('error', '[ShipFlo] openssl_encrypt failed.');
-        return '';
+        return NULL;
     }
 
     return base64_encode($iv . $encrypted);
 }
 
-function shipflo_decrypt_data($encrypted_data): string 
+function shipflo_decrypt_data(string $encrypted_data): ?string 
 {
-    $key = shipflo_get_encryption_key();
-    if (empty($key)) {
-        shipflo_logger('error', '[ShipFlo] Encryption key missing or invalid during decryption.');
-        return '';
-    }
-
-    $cipher = 'aes-256-cbc';
-    $decoded = base64_decode($encrypted_data);
+    $key        = hash('sha256', wp_salt('shipflo_encryption'), true); // derive key safely
+    $cipher     = 'aes-256-cbc';
+    $decoded    = base64_decode($encrypted_data);
 
     if ($decoded === false || strlen($decoded) < openssl_cipher_iv_length($cipher)) {
         shipflo_logger('error', '[ShipFlo] Decryption failed: Corrupted or invalid data.');
-        return '';
+        return NULL;
     }
 
-    $iv_len = openssl_cipher_iv_length($cipher);
-    $iv = substr($decoded, 0, $iv_len);
+    $iv_len     = openssl_cipher_iv_length($cipher);
+    $iv         = substr($decoded, 0, $iv_len);
     $ciphertext = substr($decoded, $iv_len);
 
-    $decrypted = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+    $decrypted  = openssl_decrypt($ciphertext, $cipher, $key, OPENSSL_RAW_DATA, $iv);
+
     if ($decrypted === false) {
         shipflo_logger('error', '[ShipFlo] openssl_decrypt failed.');
-        return '';
+        return NULL;
     }
 
     return $decrypted;
 }
 
 /** Cleanup Utility */
-function shipflo_clear_api_key_and_merchant_details(): void 
+// On plugin deactivation
+function shipflo_deactivation_cleanup(): void 
 {
+    delete_transient(SHIPFLO_ACTIVE_POSTAL_CODES_TRANSIENT);
+}
+
+// On plugin uninstall (complete removal)
+function shipflo_uninstall_cleanup(): void 
+{
+    delete_option('_shipflo_wc_plugin_encryption_key');
+    delete_option('_shipflo_wc_merchant_email');
+    delete_option('_shipflo_wc_merchant_name');
+    delete_option(SHIPFLO_WEBHOOK_SECRET);
     delete_option(SHIPFLO_API_KEY_OPTION_ID);
     delete_option(SHIPFLO_MERCHANT_ID_OPTION_ID);
-    delete_option(SHIPFLO_MERCHANT_EMAIL_OPTION_ID);
-    delete_option(SHIPFLO_MERCHANT_NAME_OPTION_ID);
+    delete_option(SHIPFLO_MERCHANT_REGISTERED_UUID);
+    delete_transient(SHIPFLO_ACTIVE_POSTAL_CODES_TRANSIENT);
 }
 
 function shipflo_is_hpos_enabled(): bool {

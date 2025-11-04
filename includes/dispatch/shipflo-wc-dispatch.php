@@ -5,7 +5,7 @@ defined('ABSPATH') || exit;
 /**
  * Perform an HTTP request to ShipFlo backend with standardized headers and logging.
  */
-function shipflo_request(string $method, string $url, string $apiKey = null, array $body = null)
+function shipflo_request(string $method, string $url, ?string $apiKey = NULL, ?array $body = NULL)
 {
     $headers = [
         'Content-Type'  => 'application/json',
@@ -60,10 +60,10 @@ function shipflo_request(string $method, string $url, string $apiKey = null, arr
 /**
  * Verify the provided API key with ShipFlo backend.
  */
-function shipflo_verify_api_key(string $apiKey)
+function shipflo_verify_api_key(string $apiKey, string $webhookSecret)
 {
     $url = shipflo_get_api_verify_url();
-    $response = shipflo_request('POST', $url, $apiKey);
+    $response = shipflo_request('POST', $url, $apiKey, ['webhook_secret' => $webhookSecret]);
 
     if (!$response['success'] || empty($response['data']['merchant_id'])) {
         shipflo_logger('error', "[ShipFlo] API Key verification failed [{$response['status']}]");

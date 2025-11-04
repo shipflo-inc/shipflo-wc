@@ -20,11 +20,10 @@ class ShipFlo_WC_Order extends ShipFlo_WC_Order_Core
     public function get_payload()
     {
         return array_merge(
+            $this->get_uuid(),
             $this->get_payload_without_dependant_info(),
-            $this->get_store_info(),
-            shipflo_get_pickup_delivery_times($this->order),
-            $this->get_signature(),
-            $this->get_uuid()
+            parent::get_signature(),
+            // $this->get_store_info(),
         );
     }
 
@@ -33,10 +32,10 @@ class ShipFlo_WC_Order extends ShipFlo_WC_Order_Core
         return array_merge(
             $this->get_ids(),
             $this->get_shipping_address(),
-            // $this->get_dropoff_object(),
             $this->get_order_items(),
             $this->get_payment_info(),
-            $this->get_message()
+            $this->get_message(),
+            shipflo_get_pickup_delivery_times($this->order),
         );
     }
 
@@ -55,46 +54,38 @@ class ShipFlo_WC_Order extends ShipFlo_WC_Order_Core
         ];
     }
 
-    public function get_store_info()
-    {
-        $store_name = shipflo_handle_null(get_bloginfo('name'));
+    // public function get_store_info()
+    // {
+    //     $store_name = shipflo_handle_null(get_bloginfo('name'));
 
-        $address1  = shipflo_handle_null(get_option('woocommerce_store_address'));
-        $city      = shipflo_handle_null(get_option('woocommerce_store_city'));
-        $post_code  = shipflo_handle_null(get_option('woocommerce_store_postcode'));
-        $country_state = shipflo_handle_null(get_option('woocommerce_default_country'));
+    //     $address1  = shipflo_handle_null(get_option('woocommerce_store_address'));
+    //     $city      = shipflo_handle_null(get_option('woocommerce_store_city'));
+    //     $post_code  = shipflo_handle_null(get_option('woocommerce_store_postcode'));
+    //     $country_state = shipflo_handle_null(get_option('woocommerce_default_country'));
 
-        [$country_code, $state_code] = array_pad(explode(':', $country_state), 2, '');
+    //     [$country_code, $state_code] = array_pad(explode(':', $country_state), 2, '');
 
-        // Build address parts array and filter out empty strings
-        $parts = array_filter([
-            $address1,
-            $city,
-            $state_code,
-            $post_code,
-            $country_code
-        ]);
+    //     // Build address parts array and filter out empty strings
+    //     $parts = array_filter([
+    //         $address1,
+    //         $city,
+    //         $state_code,
+    //         $post_code,
+    //         $country_code
+    //     ]);
 
-        $full_address = count($parts) > 0 
-                        ? "{$address1}, {$city}, {$state_code} {$post_code}, {$country_code}"
-                        : null;
+    //     $full_address = count($parts) > 0 
+    //                     ? "{$address1}, {$city}, {$state_code} {$post_code}, {$country_code}"
+    //                     : null;
 
-        return [
-            'store_name'    => html_entity_decode($store_name, ENT_QUOTES),
-            'store_address' => $full_address
-        ];
-    }
+    //     return [
+    //         'store_name'    => html_entity_decode($store_name, ENT_QUOTES),
+    //         'store_address' => $full_address
+    //     ];
+    // }
 
     public function get_uuid()
     {
         return [ 'merchant_registered_uuid' => get_option(SHIPFLO_MERCHANT_REGISTERED_UUID) ];
-    }
-
-    function get_signature()
-    {
-        $data = parent::get_signature();
-        $data['signature']['plugin'] = 'shipflo-wc';
-
-        return $data;
     }
 }

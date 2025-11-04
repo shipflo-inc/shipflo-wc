@@ -24,16 +24,22 @@ class Coderocks_Woo_Delivery extends ShipFlo_Wc_Date_Picker_Object
 			require_once CODEROCKZ_WOO_DELIVERY_DIR . '/includes/class-coderockz-woo-delivery-helper.php';
 			require_once CODEROCKZ_WOO_DELIVERY_DIR . '/includes/class-coderockz-woo-delivery-delivery-option.php';
 
-			// Resolve plugin or site timezone
-			$tz_string = (new Coderockz_Woo_Delivery_Helper())->get_the_timezone() ?: wp_timezone_string();
+			// Prefer plugin timezone, fallback to WordPress or UTC
+			$tz_string = (new Coderockz_Woo_Delivery_Helper())->get_the_timezone() ?: wp_timezone_string() ?: 'UTC';
 			try {
 				$this->time_zone = new DateTimeZone($tz_string);
 			} catch (Exception $e) {
+				shipflo_logger('warning', "[ShipFlo] Invalid timezone '{$tz_string}', using UTC fallback");
 				$this->time_zone = new DateTimeZone('UTC');
 			}
 
 			$this->set_pickup_datetime($order_id);
 			$this->set_delivery_datetime($order_id);
+
+			// Sanity check (optional)
+			if ($this->pickup_date_time && $this->delivery_date_time && $this->pickup_date_time >= $this->delivery_date_time) {
+				shipflo_logger('warning', '[ShipFlo] Pickup time is equal or after delivery time — possible scheduling issue.');
+			}
 		}
 	}
 
@@ -53,12 +59,7 @@ class Coderocks_Woo_Delivery extends ShipFlo_Wc_Date_Picker_Object
 			$datetime = "{$date} {$start_time}";
 		}
 
-		// Try several formats to cover 24h and 12h inputs
-		$formats = [
-			'Y-m-d g:i A',   // e.g. 2025-10-30 3:00 PM
-			'Y-m-d H:i',     // e.g. 2025-10-30 15:00
-			'Y-m-d H:i:s',
-		];
+		$formats = ['Y-m-d g:i A', 'Y-m-d H:i', 'Y-m-d H:i:s'];
 
 		$dt = $this->try_parse_datetime($datetime, $formats);
 		if (!$dt) {
@@ -96,11 +97,7 @@ class Coderocks_Woo_Delivery extends ShipFlo_Wc_Date_Picker_Object
 			$datetime = "{$date} {$start_time}";
 		}
 
-		$formats = [
-			'Y-m-d g:i A',   // 12-hour format with AM/PM
-			'Y-m-d H:i',     // 24-hour
-			'Y-m-d H:i:s',
-		];
+		$formats = ['Y-m-d g:i A', 'Y-m-d H:i', 'Y-m-d H:i:s'];
 
 		$dt = $this->try_parse_datetime($datetime, $formats);
 		if (!$dt) {

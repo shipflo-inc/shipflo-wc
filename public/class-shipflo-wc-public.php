@@ -140,27 +140,33 @@ class ShipFlo_Wc_Public
 	{
 		if (!defined('SHIPFLO_WEBHOOK_SECRET')) {
 			shipflo_logger('error', '[ShipFlo] Missing SHIPFLO_WEBHOOK_SECRET constant.');
-			return new WP_REST_Response(['error' => 'Webhook secret not configured.'], 500);
+			return new WP_REST_Response(['error' => '[ShipFlo]  Webhook secret not configured.'], 500);
 		}
 
 		$receivedSignature = $request->get_header('X-Shipflo-Signature');
 		if (!$receivedSignature) {
 			shipflo_logger('error', '[ShipFlo] Missing X-Shipflo-Signature header.');
-			return new WP_REST_Response(['error' => 'Unauthorized'], 401);
+			return new WP_REST_Response(['error' => '[ShipFlo] Unauthorized access to webhook endpoint - Missing signature header'], 401);
 		}
 
-		$expectedSignature = hash_hmac('sha256', $request->get_body(), SHIPFLO_WEBHOOK_SECRET);
+		$rawBody = $request->get_body();
+		$decoded = json_decode($rawBody, true);
+		ksort($decoded); // match backend key ordering
+		$reencoded = json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		
+		$webhookSecret = shipflo_get_webhook_secret();
+		$expectedSignature = hash_hmac('sha256', $reencoded, $webhookSecret);
 
 		if (!hash_equals($expectedSignature, $receivedSignature)) {
-			shipflo_logger('error', '[ShipFlo] Unauthorized access.');
-			return new WP_REST_Response(['error' => 'Unauthorized'], 401);
+			shipflo_logger('error', '[ShipFlo] Unauthorized access to webhook endpoint');
+			return new WP_REST_Response(['error' => '[ShipFlo] Unauthorized access to webhook endpoint'], 401);
 		}
 
 		$data = $request->get_json_params();
 
 		if (!isset($data['success'], $data['order_id'])) {
 			shipflo_logger('error', '[ShipFlo] Malformed webhook payload.');
-			return new WP_REST_Response(['error' => 'Malformed webhook payload'], 400);
+			return new WP_REST_Response(['error' => '[ShipFlo] Malformed webhook payload'], 400);
 		}
 
 		$order_id = absint($data['order_id']);
@@ -168,7 +174,7 @@ class ShipFlo_Wc_Public
 
 		if (!$wc_order) {
 			shipflo_logger('error', "[ShipFlo] Order not found: $order_id.");
-			return new WP_REST_Response(['error' => "Order $order_id not found"], 404);
+			return new WP_REST_Response(['error' => "[ShipFlo] Order $order_id not found"], 404);
 		}
 
 		$order_status = $data['status'];

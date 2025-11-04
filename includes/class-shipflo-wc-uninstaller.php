@@ -32,17 +32,7 @@ class ShipFlo_Wc_Uninstaller
 				restore_current_blog();
 			}
 		} else {
-			self::run_cleanup();
+			shipflo_uninstall_cleanup();
 		}
-	}
-
-	/**
-	 * Performs actual cleanup: options, custom tables, etc.
-	 */
-	private static function run_cleanup() 
-	{
-		shipflo_clear_api_key_and_merchant_details();
-		delete_option( SHIPFLO_PLUGIN_ENCRYPTION_KEY_OPTION_ID ); 
-		delete_transient( SHIPFLO_ACTIVE_POSTAL_CODES_TRANSIENT );
 	}
 }

@@ -16,4 +16,4 @@ $track_url  = shipflo_get_order_meta($order_id, SHIPFLO_MERCHANT_TRACK_LINK, tru
 
 ?>
 
-<a href="http://127.0.0.1:8000/t/4zST7wPPPE" target="_blank" class="button" style="display: inline-flex;align-items: center;gap: 4px;margin: 10px;"><span class="dashicons dashicons-tag"></span>Track Live via ShipFlo</a>
+<a href="<?php echo esc_url($track_url); ?>" target="_blank" class="button" style="display: inline-flex;align-items: center;gap: 4px;margin: 10px;"><span class="dashicons dashicons-tag"></span>Track Live via ShipFlo</a>

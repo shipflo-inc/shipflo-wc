@@ -65,7 +65,7 @@ class ShipFlo_Wc
 	 *
 	 * Set the plugin name and the plugin version that can be used throughout the plugin.
 	 * Load the dependencies, define the locale, and set the hooks for the admin area and
-	 * the public-facing side of the site.
+	 * the public-facing side of the site and sets up the cron.
 	 *
 	 * @since    1.0.0
 	 */
@@ -213,7 +213,7 @@ class ShipFlo_Wc
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_styles');
 		$this->loader->add_action('admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts');
 
-		$this->loader->add_action('admin_init', $plugin_admin, 'dump_payload');
+		// $this->loader->add_action('admin_init', $plugin_admin, 'dump_payload');
 
 		if (is_admin()) {
 			// Display Track button on Order edit page on Dashboard
@@ -259,6 +259,7 @@ class ShipFlo_Wc
 
 		// Display Track button on Order list view on My Account
 		$this->loader->add_filter('woocommerce_my_account_my_orders_actions', $plugin_public,  'shipflo_add_track_action', 10, 2);
+		$this->loader->add_action('woocommerce_thankyou', $plugin_public,  'shipflo_display_customer_track_link', 20);
 
 		// Registers Webhook endpoint to receive order updates - created or failed
 		$this->loader->add_action('rest_api_init', $plugin_public, 'shipflo_register_webhook_endpoint');

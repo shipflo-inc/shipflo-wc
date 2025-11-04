@@ -3,6 +3,8 @@
 // If this file is called directly, abort.
 defined( 'ABSPATH' ) || exit;
 
+require_once SHIPFLO_WC_PLUGIN_DIR . 'includes/functions/shipflo-wc-common.php';
+
 /**
  * Fired during plugin deactivation
  *
@@ -42,5 +44,7 @@ class ShipFlo_Wc_Deactivator
 
         // Also clear all occurrences, just in case
         wp_clear_scheduled_hook('shipflo_push_logs_event');
+
+		shipflo_deactivation_cleanup();
 	}
 }

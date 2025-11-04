@@ -1,7 +1,7 @@
 <?php
 
 // If this file is called directly, abort.
-defined( 'ABSPATH' ) || exit;
+defined('ABSPATH') || exit;
 
 /**
  * The admin-specific functionality of the plugin.
@@ -126,6 +126,44 @@ class ShipFlo_Wc_Admin
 		}
 	}
 
+	// public static function shipflo_add_buttons_to_order_edit($order = null)
+	// {
+	// 	if (is_numeric($order)) {
+	// 		$order = wc_get_order($order);
+	// 	}
+
+	// 	if (! $order instanceof WC_Order) {
+	// 		return;
+	// 	}
+
+	// 	$order_id = $order->get_id();
+	// 	$order_meta = self::get_order_meta($order_id);
+
+	// 	if (empty($order_meta['shipflo_order_id']) && $order_meta['retry_count'] < SHIPFLO_MAX_RETRY) {
+	// 		self::render_button($order_meta['retry_url'], 'redo', 'Retry Pushing to ShipFlo');
+	// 	}
+
+	// 	if ($order_meta['track_url'] && filter_var($order_meta['track_url'], FILTER_VALIDATE_URL)) {
+	// 		self::render_button($order_meta['track_url'], 'tag', 'Track via ShipFlo');
+	// 	}
+	// }
+
+	// public function shipflo_add_admin_actions($actions, $order)
+	// {
+	// 	$order_id = $order->get_id();
+	// 	$order_meta = self::get_order_meta($order_id);
+
+	// 	if (empty($order_meta['shipflo_order_id']) && $order_meta['retry_count'] < SHIPFLO_MAX_RETRY) {
+	// 		$actions['shipflo_resend'] = self::render_action($order_meta['retry_url'], 'Retry Pushing to ShipFlo', 'shipflo-resend');
+	// 	}
+
+	// 	if ($order_meta['track_url'] && filter_var($order_meta['track_url'], FILTER_VALIDATE_URL)) {
+	// 		$actions['track'] = self::render_action($order_meta['track_url'], 'Track Order', 'track');
+	// 	}
+
+	// 	return $actions;
+	// }
+
 	public static function shipflo_add_buttons_to_order_edit($order = null)
 	{
 		if (is_numeric($order)) {
@@ -136,29 +174,48 @@ class ShipFlo_Wc_Admin
 			return;
 		}
 
-		$order_id = $order->get_id();
+		$order_id   = $order->get_id();
 		$order_meta = self::get_order_meta($order_id);
 
-		if (empty($order_meta['shipflo_order_id']) && $order_meta['retry_count'] < SHIPFLO_MAX_RETRY) {
+		$dispatch_status = shipflo_get_order_meta($order_id, SHIPFLO_DISPATCH_STATUS, true);
+		$track_url       = $order_meta['track_url'];
+		$can_retry       = $order_meta['retry_count'] < SHIPFLO_MAX_RETRY;
+
+		// CASE 1: Dispatch failed or never attempted → show Retry button
+		if ($can_retry && $dispatch_status !== 'posted') {
 			self::render_button($order_meta['retry_url'], 'redo', 'Retry Pushing to ShipFlo');
+			return;
 		}
 
-		if ($order_meta['track_url'] && filter_var($order_meta['track_url'], FILTER_VALIDATE_URL)) {
-			self::render_button($order_meta['track_url'], 'tag', 'Track via ShipFlo');
+		// CASE 2: Successfully posted but no tracking info yet → show Waiting/Placeholder
+		if ($dispatch_status === 'posted' && empty($track_url)) {
+			echo '<p style="margin:10px;color:#777;">Awaiting tracking info...</p>';
+			return;
+		}
+
+		// CASE 3: Successfully posted + has tracking link → show Track button
+		if ($dispatch_status === 'posted' && $track_url && filter_var($track_url, FILTER_VALIDATE_URL)) {
+			self::render_button($track_url, 'tag', 'Track via ShipFlo');
+			return;
 		}
 	}
 
 	public function shipflo_add_admin_actions($actions, $order)
 	{
-		$order_id = $order->get_id();
-		$order_meta = self::get_order_meta($order_id);
+		$order_id     = $order->get_id();
+		$order_meta   = self::get_order_meta($order_id);
+		$dispatch_status = shipflo_get_order_meta($order_id, SHIPFLO_DISPATCH_STATUS, true);
+		$track_url    = $order_meta['track_url'];
+		$can_retry    = $order_meta['retry_count'] < SHIPFLO_MAX_RETRY;
 
-		if (empty($order_meta['shipflo_order_id']) && $order_meta['retry_count'] < SHIPFLO_MAX_RETRY) {
+		// CASE 1: Retry option
+		if ($can_retry && $dispatch_status !== 'posted') {
 			$actions['shipflo_resend'] = self::render_action($order_meta['retry_url'], 'Retry Pushing to ShipFlo', 'shipflo-resend');
 		}
 
-		if ($order_meta['track_url'] && filter_var($order_meta['track_url'], FILTER_VALIDATE_URL)) {
-			$actions['track'] = self::render_action($order_meta['track_url'], 'Track Order', 'track');
+		// CASE 2: Track option
+		if ($dispatch_status === 'posted' && $track_url && filter_var($track_url, FILTER_VALIDATE_URL)) {
+			$actions['track'] = self::render_action($track_url, 'Track Order', 'track');
 		}
 
 		return $actions;
@@ -227,17 +284,41 @@ class ShipFlo_Wc_Admin
 		return $new_columns;
 	}
 
+	// public function shipflo_populate_orders_list_column($column, $order_id)
+	// {
+	// 	if ('shipflo_track_link_col' === $column) {
+	// 		$merchant_track_url = shipflo_get_order_meta($order_id, SHIPFLO_MERCHANT_TRACK_LINK, true);
+
+	// 		if ($merchant_track_url) {
+	// 			printf(
+	// 				'<a href="%s" target="_blank" class="button button-small" style="display: inline-flex;align-items: center;gap: 4px;margin: 10px;font-size: 14px;"><span class="dashicons dashicons-tag" style="font-size: 14px;width: 14px;height: 14px;"></span>Track via ShipFlo</a>',
+	// 				esc_url($merchant_track_url)
+	// 			);
+	// 		}
+	// 	}
+	// }
+
 	public function shipflo_populate_orders_list_column($column, $order_id)
 	{
-		if ('shipflo_track_link_col' === $column) {
-			$merchant_track_url = shipflo_get_order_meta($order_id, SHIPFLO_MERCHANT_TRACK_LINK, true);
+		if ($column !== 'shipflo_track_link_col') {
+			return;
+		}
 
-			if ($merchant_track_url) {
-				printf(
-					'<a href="%s" target="_blank" class="button button-small" style="display: inline-flex;align-items: center;gap: 4px;margin: 10px;font-size: 14px;"><span class="dashicons dashicons-tag" style="font-size: 14px;width: 14px;height: 14px;"></span>Track via ShipFlo</a>',
-					esc_url($merchant_track_url)
-				);
-			}
+		$dispatch_status = shipflo_get_order_meta($order_id, SHIPFLO_DISPATCH_STATUS, true);
+		$merchant_track_url = shipflo_get_order_meta($order_id, SHIPFLO_MERCHANT_TRACK_LINK, true);
+
+		if ($dispatch_status === 'posted' && $merchant_track_url && filter_var($merchant_track_url, FILTER_VALIDATE_URL)) {
+			printf(
+				'<a href="%s" target="_blank" class="button button-small" style="display:inline-flex;align-items:center;gap:4px;margin:10px;font-size:14px;">
+                <span class="dashicons dashicons-tag" style="font-size:14px;width:14px;height:14px;"></span>
+                Track via ShipFlo
+            </a>',
+				esc_url($merchant_track_url)
+			);
+		} elseif ($dispatch_status !== 'posted') {
+			echo '<span style="color:#888;">Not dispatched</span>';
+		} else {
+			echo '<span style="color:#888;">Awaiting tracking</span>';
 		}
 	}
 }
