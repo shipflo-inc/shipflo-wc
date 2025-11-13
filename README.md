@@ -93,3 +93,4 @@ This plugin is licensed under the [GPLv3 or later](https://github.com/shipflo-in
 
 **Developed with ❤️ by [OXO Solutions®](https://oxosolutions.com)**
 
+
