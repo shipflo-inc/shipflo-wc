@@ -1,10 +1,95 @@
-=== ShipFlo WooCommerce ===
-Contributors: sgssandhu
-Donate link: https://sgssandhu.com/
-Requires at least: 3.0.1
-Tested up to: 3.4
-Stable tag: 4.3
-License: GPLv3 or later
-License URI: https://www.gnu.org/licenses/gpl-3.0.txt
+# ShipFlo for WooCommerce
+Easily connect your WooCommerce store to **[ShipFlo](https://shipflo.com)** and automate your order fulfillment process.  
 
+This plugin enables automatic order syncing between WooCommerce and your ShipFlo dashboard.
 The ShipFlo plugin syncs your WooCommerce orders with the ShipFlo delivery platform, automating dispatch and providing real-time tracking for a hassle-free logistics experience.
+
+---
+
+## 🚀 Features
+
+- Automatically push new WooCommerce orders to your ShipFlo account.  
+- Display live tracking information for customers.  
+- Compatible with popular delivery scheduling plugins.  
+- Seamless setup and activation.
+
+---
+
+## 📦 Installation
+
+### 1. Download the Plugin
+Download the latest version of the ShipFlo plugin from our GitHub repository:  
+➡️ [https://github.com/shipflo-inc/shipflo-wc](https://github.com/shipflo-inc/shipflo-wc)
+
+### 2. Upload & Install via WordPress Admin
+1. Log in to your **WordPress Admin Panel**.  
+2. Navigate to **Plugins → Add New**.  
+3. Click **Upload Plugin** at the top.  
+4. Choose the `shipflo-wc.zip` file you downloaded.  
+5. Click **Install Now**, then **Activate Plugin**.
+
+Your ShipFlo plugin is now installed and active.
+
+---
+
+## 🔑 Connect WooCommerce with ShipFlo
+
+### Step 1: Generate API Key in ShipFlo
+1. Log in to your **[ShipFlo Dashboard](https://app.shipflo.com)**.  
+2. Go to your **Profile** → click the **three-dot menu (⋮)**.  
+3. Select **Generate API Key** and click **Run**.  
+4. Copy the generated **API key** and close the dialog box.
+
+### Step 2: Configure in WooCommerce
+1. Log in to your **WordPress Admin Panel**.  
+2. Go to **WooCommerce → Settings → ShipFlo** tab.  
+3. Paste the **API Key** you copied from ShipFlo.  
+4. Click **Save Changes**.
+
+✅ Your WooCommerce store is now connected to ShipFlo.
+
+---
+
+## 🔗 Compatibility
+
+ShipFlo works seamlessly with the following popular plugins:
+
+- **Delivery & Pickup Date Time for WooCommerce** by *Coderockz*  
+- **Order Delivery Date for WooCommerce (Lite)** by *Tyche Softwares*
+
+---
+
+## 📦 Order Handling & Automation
+
+- Only **new orders** with **shipping addresses** within ShipFlo’s **service areas** are automatically sent to your ShipFlo account.  
+- Orders **outside the service area** will remain in WooCommerce.
+
+---
+
+## 🧭 Order Status Updates
+
+### In WooCommerce Admin
+- Successfully pushed orders show a **“Track Order”** button.  
+- Failed pushes display a **“Retry Pushing to ShipFlo”** button.
+
+### For Customers
+- Customers can view real-time **order status updates** on:
+  - The **Order Received** page, and  
+  - The **My Account → Orders** section.
+
+---
+
+## 🛠 Support & Feedback
+
+If you encounter any issues or have feedback, please create an issue in the [GitHub repository](https://github.com/shipflo-inc/shipflo-wc/issues).
+
+---
+
+## 📄 License
+
+This plugin is licensed under the [GPLv3 or later](https://github.com/shipflo-inc/shipflo-wc/blob/main/LICENSE).
+
+---
+
+**Developed with ❤️ by [OXO Solutions®](https://oxosolutions.com)**
+
